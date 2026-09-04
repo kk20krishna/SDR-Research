@@ -1,5 +1,4 @@
 import os
-import stat
 import subprocess
 import sys
 import gdown
@@ -9,25 +8,25 @@ LOCAL_DB_PATH = "phoenix.db"
 
 # 1. Download SQLite DB from Google Drive if not present
 if not os.path.exists(LOCAL_DB_PATH):
-    print("Downloading SQLite DB from Google Drive...")
+    print("Downloading SQLite DB from Google Drive...", flush=True)
     url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
     gdown.download(url, LOCAL_DB_PATH, quiet=False)
 
-    # Read-only permissions
-    os.chmod(LOCAL_DB_PATH, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-
-# 2. Set Phoenix Environment Variables
+# 2. Configure Phoenix Environment
 abs_path = os.path.abspath(LOCAL_DB_PATH)
 port = os.environ.get("PORT", "10000")
 
 env = os.environ.copy()
 env["PHOENIX_HOST"] = "0.0.0.0"
 env["PHOENIX_PORT"] = str(port)
-env["PHOENIX_SQL_DATABASE_URL"] = f"sqlite:///file:{abs_path}?mode=ro&uri=true"
 
-print(f"Launching Phoenix on port {port}...")
+# Allow read-write locally so Phoenix can perform required startup migrations
+# (Render filesystem is ephemeral, so your Google Drive source file cannot be modified)
+env["PHOENIX_SQL_DATABASE_URL"] = f"sqlite:///{abs_path}"
 
-# 3. Exec Phoenix directly using its official CLI command
+print(f"Launching Phoenix on port {port}...", flush=True)
+
+# 3. Start Phoenix server via CLI
 sys.exit(
     subprocess.call(
         [sys.executable, "-m", "phoenix.server.main", "serve"],
