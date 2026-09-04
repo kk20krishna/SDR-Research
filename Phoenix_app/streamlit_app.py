@@ -12,23 +12,26 @@ LOCAL_DB_PATH = "phoenix.db"
 
 st.set_page_config(page_title="Krishna Kumar - SDR Research", layout="wide")
 
-@st.cache_resource(show_spinner="Downloading SQLite DB from Google Drive...")
-def download_sqlite_from_gdrive(file_id: str, local_path: str) -> str:
-    """Download public file via gdown and set OS-level read-only permissions."""
+@st.cache_resource(show_spinner="Downloading database...")
+def init_db(file_id: str, local_path: str):
     if not os.path.exists(local_path):
         url = f"https://drive.google.com/uc?id={file_id}"
-        output = gdown.download(url, local_path, quiet=False)
-
-        if output is None or not os.path.exists(local_path):
-            raise RuntimeError(
-                "Download failed. Check that the file ID is correct and "
-                "link sharing is set to 'Anyone with the link can view'."
-            )
-
-        # Enforce OS-level read-only access (r--r--r--)
+        gdown.download(url, local_path, quiet=False)
         os.chmod(local_path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    
+    os.environ["PHOENIX_SQL_DATABASE_URL"] = f"sqlite:///file:{os.path.abspath(local_path)}?mode=ro&uri=true"
+    session = px.launch_app()
+    return session
 
-    return os.path.abspath(local_path)
+try:
+    session = init_db(GDRIVE_FILE_ID, LOCAL_DB_PATH)
+    
+    # Render using Phoenix's native HTML/JS display representation
+    ui_html = session._repr_html_()
+    st.components.v1.html(ui_html, height=1000, scrolling=True)
+
+except Exception as e:
+    st.error(f"Error: {e}")
 
 
 @st.cache_resource
