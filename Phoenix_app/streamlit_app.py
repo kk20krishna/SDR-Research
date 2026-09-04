@@ -7,11 +7,10 @@ import streamlit.components.v1 as components
 
 # --- Configuration ---
 # Replace with your actual Google Drive File ID
-GDRIVE_FILE_ID = "Y11FRH8o33D31ggeatROOKk3GxMqJ6rOca"
+GDRIVE_FILE_ID = "14JPtuzttivq8JEcfcEBN9Pam3FVTHKJk"
 LOCAL_DB_PATH = "phoenix.db"
 
-st.set_page_config(page_title="Arize Phoenix Viewer", layout="wide")
-
+st.set_page_config(page_title="Krishna Kumar - SDR Research", layout="wide")
 
 @st.cache_resource(show_spinner="Downloading SQLite DB from Google Drive...")
 def download_sqlite_from_gdrive(file_id: str, local_path: str) -> str:
